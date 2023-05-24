@@ -12,5 +12,5 @@ networkx==2.4
 numpy==1.18.1
 sklearn==0.0
 tensorboard==2.1.1
-torch==1.4.0
 tqdm==4.41.1
+torch==1.10.0
