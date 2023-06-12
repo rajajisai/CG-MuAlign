@@ -31,5 +31,6 @@ Obtain your binarized pre-trained word embeddings $PATH at [fastText](https://fa
 
 ```
 python main.py --gpu=0 --pretrain-path=$PATH
+python main.py --gpu=0 --pretrain_path="C:\Users\Smart\Downloads\wiki.en\wiki.en100.bin"
 ```
 

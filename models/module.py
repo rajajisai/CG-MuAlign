@@ -114,6 +114,7 @@ class smallGraphAlignLayer(nn.Module):
 
     def reduce(self, node):
         if 'm' in node.mailbox:
+            # print("-------------- IN  REDUCE FUCNTION--------------------------------")
             mask = node.mailbox['m'].sum(dim=2) != 0
             attn_weights = torch.exp(-torch.norm(node.mailbox['z'][:, :, None] - node.mailbox['m'][:, None], dim=3, p=2))
             tmp_attn = attn_weights * (1 - mask[:,:,None].float()) * mask[:,None].float()
@@ -150,7 +151,7 @@ class smallGraphAlignLayer(nn.Module):
             g.recv(node_indices, reduce_func = self.reduce, apply_node_func = lambda node : {'activation': self.activation(node.data['z'])})
         #print('here')
         return g.ndata['activation']
-
+  
 class smallGraphAlignNet(nn.Module):
     """Subgraph Alignment Network for Entity Linkage
     """
@@ -198,6 +199,9 @@ class smallGraphAlignNet(nn.Module):
     def forward(self, g, edge_indices, node_indices = None):
         self.g = g
         h = self.g.ndata['features']
+        print(len(self.layers))
+        print("printing node indices")
+        print(len(node_indices))
         for i, layer in enumerate(self.layers):
             #print('here')
             if i != len(self.layers) - 1:

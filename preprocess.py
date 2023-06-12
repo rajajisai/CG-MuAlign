@@ -22,23 +22,29 @@ class FeatureGenerator(object):
 		else:     
 			return self.model.get_word_vector(name.replace('"',''))
 
-# the interface to generate a numpy feature matrix for every node in the graph
+# the interface to generate a numpy trix for every node in the graph
 def warp_feature(model, source, mapping):
+	print("--------------Warping Features-----------------")
 	# warp_feature(feat, self.entity_table, self.id2idx)
 	feature_matrix = np.zeros((len(source), 100))
-
+	# print(source)
 	row = 0
 	none_cnt = 0
+	# print("------------Source Length-----------")
+	# print(len(source))
 	for k in source:
 		# now we use the first attribute
+		# print(k)
 		for idx,attr in enumerate(source[k]):
 			#embed()
-			#feature_matrix[mapping[k], idx*100:(idx+1)*100] = model.generateEmbFeature(attr, sent=True)
-			print("-----------------PRINTING ATTRIBUTES--------------------")
-			print(np.ndim(feature_matrix[mapping[k],:]))
-			print(np.ndim(model.generateEmbFeature(attr,sent=True)))
+			# feature_matrix[mapping[k], idx*100:(idx+1)*100] = model.generateEmbFeature(attr, sent=True)
+			# print("-----------------PRINTING ATTRIBUTES--------------------")
+			# print(feature_matrix[mapping[k],:].shape)
+			# print(model.generateEmbFeature(attr,sent=True).shape)
 			feature_matrix[mapping[k], :] += model.generateEmbFeature(attr, sent=True)
-
+	# print(feature_matrix)
+	print("----------------Printing Matrix Shape----------------------")
+	print(feature_matrix.shape)
 	return feature_matrix
 
 
@@ -61,6 +67,10 @@ def generateTrainWithType(in_path, graph_a, graph_b, positive_only=False):
 			train_data.append([graph_a.id2idx['ID_{}'.format(tmp[0])], 
 				graph_b.id2idx['ID_{}'.format(tmp[1])], int(tmp[2])])
 	# embed()
+	# print("Printting left set anfd right set and size")
+	# print(left_set)
+	# print(len(left_set))
+	# print(right_set)
 	with open(in_path+'valid.csv') as IN:
 		IN.readline()
 		left_set, right_set = set(), set()
@@ -115,15 +125,15 @@ class Graph(object):
 		#
 		print("--------------------Building Graphs--------------------")
 		with open(table,encoding="utf8") as IN:
-			print("------------Reading CSV------")
+			print("------------Reading CSV-------------")
 			spamreader = csv.reader(IN, delimiter=',')
 			# embed()
 			# fields = IN.readline().strip().split(',')
 			fields = next(spamreader)
 			print(fields)
+			# print(fields)
 			print(next(spamreader))
-			print(next(spamreader))
-			print(fields[1:])
+			
 			# self.entity_table, id2idx = {}, {}
 			type_list, type_dict = [], {}
 			attr_list = []
@@ -132,23 +142,28 @@ class Graph(object):
 					type_list.append(field.split('_')[0])
 				else:
 					attr_list.append(field)
+			print("-------------------------Printing Type List---------------")
 			print(type_list)
+			print("------------------------Printing Attribute List--------------------------")
 			print(attr_list)
 			edge_list = []
 			# print(spamreader[0][1:])
 			for line in spamreader:
-				print(line)
+				# print(line)
 				tmp = line
 				for idx, value in enumerate(tmp[1:]):
+					# print(idx)
 					if idx < len(type_list):
 						if idx == 0:
 							_ID = 'ID_{}'.format(tmp[0])
 							self.entity_table[_ID] = [type_list[idx], value]
-
+							# print(type_list[idx])
 							self.id2idx[_ID] = len(self.id2idx)
 							target_id = self.id2idx[_ID]
 						else:
 							_id = '{}_{}'.format(type_list[idx],value)
+							# print(_id)
+							# print(type_list[idx])
 							if _id not in self.entity_table:
 								self.entity_table[_id] = [type_list[idx], value]
 								#_ID = '{}_{}'.format(tm, type_list[idx])
@@ -156,17 +171,29 @@ class Graph(object):
 							#edge_list.append([target_id, idx, id2idx[value]])
 							self.edge_src.append(target_id)
 							self.edge_dst.append(self.id2idx[_id])
-							self.edge_type.append(idx - 1)
+							# print("------------------PRITING TARGFET AND ID2IDX")
+							# print(target_id)
+							# print(self.id2idx[_id])
+							# print(idx)
+							
+							self.edge_type.append(idx-1)
 					else:
-						print("IN else")
-						print(_ID)
+						# print("IN else")
+						# print(_ID)
 						self.entity_table[_ID].append(value)
-					print(self.entity_table)
-					print(self.id2idx)
-				break
+					# print(self.entity_table)
+					# print(self.id2idx)
+				
 			# print(self.entity_table)
+			# print("Printing Album title")
+			# print(self.entity_table["Album_Title"])
+			# print(self.entity_table.keys())
 			# print(self.id2idx)
-
+			# print(self.edge_type)
+			# print("Printing source and destination graphs")
+			# print(self.edge_src)
+			# print(self.edge_dst)
+			# print(self.entity_table["ID_5952"][3])
 			feat = FeatureGenerator(self.pretrain_path)
 			#for tmp in triples
 				#if tmp[0] in self.id2idx and tmp[1] in self.id2idx and tmp[2] in self.relation_list:
@@ -174,10 +201,10 @@ class Graph(object):
 					#g.add_edges()
 					#self.edge_list.append([self.id2idx[tmp[0]], self.id2idx[tmp[2]], self.relation_list.index(tmp[1])])
 			# embed()	
-			print("Warping Features")
+			
 			self.features = warp_feature(feat, self.entity_table, self.id2idx)
 		#assert self.features.shape()[0] == len(self.id2idx)
-						
+					
 				
 
 def checkTest(mapping_a, mapping_b, in_file):
