@@ -75,6 +75,7 @@ class RelEdgeUpdate(nn.Module):
                     out_feats, 1, bias=True)
 
     def forward(self, edges):
+        # print("In Edge")
         if self.cross_attn:
             return {'m': self.linear(edges.src['h'])}
         else:
@@ -114,12 +115,20 @@ class smallGraphAlignLayer(nn.Module):
 
     def reduce(self, node):
         if 'm' in node.mailbox:
-            # print("-------------- IN  REDUCE FUCNTION--------------------------------")
+            # print("-------------- IN  REDUCE FUCNTION--ß------------------------------")
             mask = node.mailbox['m'].sum(dim=2) != 0
+            torch.set_printoptions(profile="full")
+            print("------------Prinitng Z----------------ss")
+            print(node.mailbox['z'].size())
+            print(node.mailbox['z'])
+            # print(node.mailbox['m'].shape)
+            # print(type(node.mailbox['m']))
             attn_weights = torch.exp(-torch.norm(node.mailbox['z'][:, :, None] - node.mailbox['m'][:, None], dim=3, p=2))
             tmp_attn = attn_weights * (1 - mask[:,:,None].float()) * mask[:,None].float()
             batch_weight = tmp_attn.sum(dim=2) / tmp_attn.sum(dim=2).sum(dim=1)[:,None]
             alpha = F.softmax(node.mailbox['e'], dim=1)
+            # print("Printing alpha")
+            # print(alpha.shape)
             batch_weight = batch_weight * alpha.squeeze()
             batch_weight = batch_weight / batch_weight.sum(dim=1)[:,None]
             return {'z': torch.cat([node.data['h'], torch.sum(node.mailbox['z']*batch_weight[:,:,None], dim=1)], dim=1)}
@@ -132,12 +141,15 @@ class smallGraphAlignLayer(nn.Module):
         g = g.local_var()
         g.ndata['h'] = feat
         g.ndata['self_h'] = self.rel_layers[0].linear(g.ndata['h'])
+        # print("In Layer")
         # bi-directional relations
         for i in range(2 * self.num_rels):
             g.send(edge_indices[i+1], self.rel_layers[i+1])
 
         if attn:
             for i in range(2 * self.num_rels):
+                # print("This is index ",i)
+                # print(edge_indices[-i-1])
                 g.send(edge_indices[-i-1], self.attn_layers[i+1])
 
         # self-loop
@@ -187,23 +199,24 @@ class smallGraphAlignNet(nn.Module):
         self.fc = nn.Linear(2*n_hidden, 1)
         self.loss_fcn = loss_fcn
 
-    def predict(self, emb, train_ids, batch_size, num_negatives, n_hidden, offset):
-        loss = 0.0
-        for batch in tdata.DataLoader(train_ids, batch_size=batch_size*(num_negatives+1), shuffle=False):
-        #print(batch.shape)
-            output_a, output_b = emb[batch[:, 0]].view(-1, num_negatives+1, 2 * n_hidden), emb[batch[:, 1] + offset].view(-1, num_negatives+1, 2 * n_hidden)
-            logits = self.dist(output_a, output_b)
-            loss += self.loss_fcn(logits)
-        return loss
+    # def predict(self, emb, train_ids, batch_size, num_negatives, n_hidden, offset):
+    #     loss = 0.0
+    #     print("I AM IN PREDICT")
+    #     for batch in tdata.DataLoader(train_ids, batch_size=batch_size*(num_negatives+1), shuffle=False):
+    #     #print(batch.shape)
+    #         output_a, output_b = emb[batch[:, 0]].view(-1, num_negatives+1, 2 * n_hidden), emb[batch[:, 1] + offset].view(-1, num_negatives+1, 2 * n_hidden)
+    #         logits = self.dist(output_a, output_b)
+    #         loss += self.loss_fcn(logits)
+    #     return loss
     
     def forward(self, g, edge_indices, node_indices = None):
         self.g = g
         h = self.g.ndata['features']
-        print(len(self.layers))
-        print("printing node indices")
-        print(len(node_indices))
+        # print("In Network")
+        
         for i, layer in enumerate(self.layers):
             #print('here')
+            # print("This is Layer ", i)
             if i != len(self.layers) - 1:
                 h = layer(self.g, h, edge_indices, node_indices[len(self.layers) - 1 - i])
             else:

@@ -126,6 +126,7 @@ class Graph(object):
 		print("--------------------Building Graphs--------------------")
 		with open(table,encoding="utf8") as IN:
 			print("------------Reading CSV-------------")
+			print("CSV Path is ",table)
 			spamreader = csv.reader(IN, delimiter=',')
 			# embed()
 			# fields = IN.readline().strip().split(',')
@@ -142,9 +143,9 @@ class Graph(object):
 					type_list.append(field.split('_')[0])
 				else:
 					attr_list.append(field)
-			print("-------------------------Printing Type List---------------")
+			print("-----------------Printing Type List---------------")
 			print(type_list)
-			print("------------------------Printing Attribute List--------------------------")
+			print("-----------------Printing Attribute List-----------")
 			print(attr_list)
 			edge_list = []
 			# print(spamreader[0][1:])

@@ -201,6 +201,8 @@ def main(args):
         torch.cuda.set_device(args.gpu)
     #print('here')
     g, num_rel, offset, adj_a, adj_b, type_a_dict, type_b_dict = genSubGraph(graph_a, graph_b, args.n_layers+1)
+    # print("Printing Type A")
+    # print(type_a_dict)
     in_feats = g.ndata['features'].shape[1]
     print("Printing input size ")
     print(in_feats)
@@ -269,11 +271,11 @@ def main(args):
             test_edges, test_nodes, eid = genEdgeBatch(g, batch, graph_a, graph_b, adj_a, adj_b, type_a_dict, type_b_dict, num_hops = args.n_layers + 1, num_neighbors = args.num_neighbors)
             #print("Number of nodes:{}, Number of edges:{}".format(g.number_of_nodes(), g.number_of_edges()))
             eids += eid
-            # print("-----------Printing TEST EDGES--------------")
+            # print("-----------Printing Train EDGES--------------")
             # print(test_edges)
-            # print("-----------Printing TEST NODES--------------")
+            # print("-----------Printing Train NODES--------------")
             # print(test_nodes)
-            # print("Priting EIDS")
+            # print("Printing EIDS")
             # print(eid)
             # embed()
             emb = model_gan(g, test_edges, test_nodes)
@@ -301,12 +303,14 @@ def main(args):
             optimizer.step()
             # print(g.ndata)
             # print(g.ndata.keys())
+        # return 
         g.remove_edges(eids)
         del emb
         torch.cuda.empty_cache()
         
         print('Epoch:{}, loss:{}'.format(epoch, training_loss ))
-
+        # return 
+        # Running Model on Validation DataSet
         with torch.no_grad():
             eids = []
             for batch in val_loader:
@@ -329,7 +333,7 @@ def main(args):
                     torch.save(model_gan.state_dict(), 'best_gan.pkl')
                 
             g.remove_edges(eids)
-        
+    # Running Model on Test DataSet   
     model_gan.load_state_dict(torch.load('best_gan.pkl'))
     with torch.no_grad():
             eids = []
